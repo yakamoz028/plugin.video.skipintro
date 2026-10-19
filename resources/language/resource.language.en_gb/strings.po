@@ -200,8 +200,8 @@ msgstr "Notification opacity (%)"
 
 #: settings.xml
 msgctxt "#32042"
-msgid "30-100. Lower is more transparent; below 30 the text gets hard to read."
-msgstr "30-100. Lower is more transparent; below 30 the text gets hard to read."
+msgid "0-100. Lower is more transparent; 0 hides the background panel."
+msgstr "0-100. Lower is more transparent; 0 hides the background panel."
 
 #: settings.xml
 msgctxt "#32043"

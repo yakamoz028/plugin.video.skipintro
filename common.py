@@ -98,17 +98,21 @@ def log_debug(msg: str, prefix: str = "[SkipIntro]") -> None:
         log(msg, prefix, xbmc.LOGDEBUG)
 
 
-# 通知窗口：单个皮肤窗口，运行时按文本宽度调整控件尺寸，
-# 等价于 Kodi 原生 Notification 的自适应宽度（见 apply_notification_layout）
+# 通知窗口：单个皮肤窗口，左侧图标 + 右侧文字，背景面板可选（透明度可调），
+# 运行时按内容宽度调整控件尺寸，等价于 Kodi 原生 Notification 的自适应宽度
 NOTIFICATION_WINDOW_XML = "notification_overlay.xml"
 NOTIFICATION_LABEL_ID = 100
 NOTIFICATION_IMAGE_ID = 101
+NOTIFICATION_ICON_ID = 102
+NOTIFICATION_ICON_SIZE = 48         # 图标边长
+NOTIFICATION_ICON_GAP = 16          # 图标与文字间距
+NOTIFICATION_ROW_HEIGHT = 72        # 单行高度（与 XML 里 label 高度一致）
 NOTIFICATION_MAX_WIDTH = 900        # XML 里 group 的固定宽度，窗口不会超过它
-NOTIFICATION_SIDE_PADDING = 8       # 文字左右内边距
-NOTIFICATION_MIN_WIDTH = 0          # 窗口宽度下限，0 表示完全贴合文本
+NOTIFICATION_SIDE_PADDING = 12      # 内容左右内边距
+NOTIFICATION_MIN_WIDTH = 0          # 窗口宽度下限，0 表示完全贴合内容
 NOTIFICATION_FONT_EM = 32.0         # font14 在 720p 基准下的 em 尺寸（导火线 32 / Estuary 33）
 NOTIFICATION_WIDTH_SAFETY = 1.02    # 宽度估算余量，吸收字体渲染的 kerning/hinting 差异
-NOTIFICATION_BASE_COLOR = "262626"  # 通知条底色（RGB），透明度由设置项控制
+NOTIFICATION_BASE_COLOR = "262626"  # 背景面板底色（RGB），透明度由设置项控制
 NOTIFICATION_OPACITY_DEFAULT = 80   # 默认不透明度（%）
 NOTIFICATION_TOP_DEFAULT = 10       # 通知条垂直位置（占屏幕高度的百分比）
 NOTIFICATION_TOP_MIN = 0
@@ -171,14 +175,18 @@ def measure_notification_text(text: str) -> float:
 
 
 def notification_window_width(text: str) -> int:
-    """按文本宽度算出窗口宽度（含两侧内边距），并限制在配置区间内。"""
+    """按「图标 + 文字」的内容宽度算出窗口宽度，并限制在配置区间内。"""
     text_width = measure_notification_text(text) * NOTIFICATION_WIDTH_SAFETY
-    width = int(math.ceil(text_width)) + NOTIFICATION_SIDE_PADDING * 2
+    width = (
+        int(math.ceil(text_width))
+        + NOTIFICATION_ICON_SIZE + NOTIFICATION_ICON_GAP
+        + NOTIFICATION_SIDE_PADDING * 2
+    )
     return max(NOTIFICATION_MIN_WIDTH, min(width, NOTIFICATION_MAX_WIDTH))
 
 
 def notification_background_color() -> str:
-    """按设置里的不透明度生成通知条背景色（AARRGGBB）。"""
+    """按设置里的不透明度生成背景面板颜色（AARRGGBB）。"""
     opacity = SETTINGS.notification_opacity
     alpha = max(0, min(255, int(opacity * 255 / 100.0 + 0.5)))
     return f"{alpha:02X}{NOTIFICATION_BASE_COLOR}"
@@ -194,10 +202,10 @@ def notification_max_wait() -> float:
 
 
 def apply_notification_layout(window: Any, text: str) -> bool:
-    """按文本宽度调整背景与文本控件：右边缘锚定，左边缘随文字伸缩。
+    """按内容宽度调整背景面板、图标与文本控件：右边缘锚定，整体随文本伸缩。
 
-    XML 里 group 固定为 NOTIFICATION_MAX_WIDTH 宽并靠右，这里把背景和文本
-    重新定位到 group 的右侧，宽度贴合文本，等价于原生通知的自适应效果。
+    XML 里 group 固定为 NOTIFICATION_MAX_WIDTH 宽并靠右，这里把背景面板、图标
+    和文本重新定位到 group 的右侧，宽度贴合「图标 + 文字」，等价于原生通知的自适应效果。
     """
     try:
         width = notification_window_width(text)
@@ -207,23 +215,33 @@ def apply_notification_layout(window: Any, text: str) -> bool:
         top_pct = SETTINGS.notification_top_pct
         top = int(screen_height * top_pct / 100)
 
-        image = window.getControl(NOTIFICATION_IMAGE_ID)
-        if image:
-            image.setPosition(left, top)
-            image.setWidth(width)
+        panel = window.getControl(NOTIFICATION_IMAGE_ID)
+        if panel:
+            panel.setPosition(left, top)
+            panel.setWidth(width)
             try:
-                color = notification_background_color()
-                image.setColorDiffuse(color)
-                log_debug(
-                    f"Notification layout: width={width}, top={top}({top_pct}%), color={color}"
-                )
+                panel.setColorDiffuse(notification_background_color())
             except Exception as e:
                 log(f"Failed to apply notification opacity: {e}", xbmc.LOGWARNING)
 
+        icon_left = left + NOTIFICATION_SIDE_PADDING
+        icon = window.getControl(NOTIFICATION_ICON_ID)
+        if icon:
+            icon.setPosition(
+                icon_left,
+                top + (NOTIFICATION_ROW_HEIGHT - NOTIFICATION_ICON_SIZE) // 2,
+            )
+            icon.setWidth(NOTIFICATION_ICON_SIZE)
+            icon.setHeight(NOTIFICATION_ICON_SIZE)
+
+        label_left = icon_left + NOTIFICATION_ICON_SIZE + NOTIFICATION_ICON_GAP
         label = window.getControl(NOTIFICATION_LABEL_ID)
         if label:
-            label_width = width - NOTIFICATION_SIDE_PADDING * 2
-            label.setPosition(left + NOTIFICATION_SIDE_PADDING, top)
+            label_width = (
+                width - NOTIFICATION_SIDE_PADDING * 2
+                - NOTIFICATION_ICON_SIZE - NOTIFICATION_ICON_GAP
+            )
+            label.setPosition(label_left, top)
             label.setWidth(label_width)
             actual = label.getWidth()
             if actual != label_width:
@@ -236,8 +254,8 @@ def apply_notification_layout(window: Any, text: str) -> bool:
             f"Layout: text={measure_notification_text(text):.0f}px, window={width}, "
             f"left={left}, top={top}({top_pct}%), screen_h={screen_height}"
         )
-        if image:
-            log_debug(f"  image: pos={image.getPosition()}, size={image.getWidth()}x{image.getHeight()}")
+        if icon:
+            log_debug(f"  icon: pos={icon.getPosition()}, size={icon.getWidth()}x{icon.getHeight()}")
         if label:
             log_debug(f"  label: pos={label.getPosition()}, size={label.getWidth()}x{label.getHeight()}")
 
@@ -533,9 +551,9 @@ class SettingsManager:
 
     @property
     def notification_opacity(self) -> int:
-        """通知条不透明度百分比，设置项可调（30-100）。"""
+        """通知条背景不透明度百分比，设置项可调（0-100）。"""
         return self._get_int_setting(
-            'notification_opacity', NOTIFICATION_OPACITY_DEFAULT, 30, 100
+            'notification_opacity', NOTIFICATION_OPACITY_DEFAULT, 0, 100
         )
 
     @property
