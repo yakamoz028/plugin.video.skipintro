@@ -71,8 +71,9 @@ class TextWidthTest(unittest.TestCase):
 
 
 class WindowWidthTest(unittest.TestCase):
-    def test_empty_returns_padding_only(self):
-        self.assertEqual(notification_window_width(""), 16)
+    def test_empty_returns_icon_and_padding_only(self):
+        # 空文本时窗口宽度 = 图标 + 图标间距 + 左右内边距（48 + 16 + 12 * 2）
+        self.assertEqual(notification_window_width(""), 88)
 
     def test_clamped_to_max(self):
         self.assertEqual(notification_window_width("片" * 100), 900)
