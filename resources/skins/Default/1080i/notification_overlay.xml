@@ -8,17 +8,25 @@
             <width>900</width>
             <height>72</height>
             <control type="image" id="101">
-                <left>640</left>
-                <top>108</top>
+                <left>0</left>
+                <top>0</top>
                 <width>260</width>
                 <height>72</height>
                 <texture border="20">dialogs/glass_flat.png</texture>
                 <colordiffuse>B0262626</colordiffuse>
             </control>
+            <control type="image" id="102">
+                <left>12</left>
+                <top>12</top>
+                <width>48</width>
+                <height>48</height>
+                <aspectratio>keep</aspectratio>
+                <texture>dialogs/notification_icon.png</texture>
+            </control>
             <control type="label" id="100">
-                <left>660</left>
-                <top>108</top>
-                <width>220</width>
+                <left>76</left>
+                <top>0</top>
+                <width>820</width>
                 <height>72</height>
                 <align>center</align>
                 <aligny>center</aligny>

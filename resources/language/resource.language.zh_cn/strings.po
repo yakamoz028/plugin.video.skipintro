@@ -200,8 +200,8 @@ msgstr "通知条透明度（%）"
 
 #: settings.xml
 msgctxt "#32042"
-msgid "30-100. Lower is more transparent; below 30 the text gets hard to read."
-msgstr "30-100，数值越小越透明；低于 30 文字会看不清"
+msgid "0-100. Lower is more transparent; 0 hides the background panel."
+msgstr "0-100，数值越小越透明；0 表示不显示背景面板"
 
 #: settings.xml
 msgctxt "#32043"

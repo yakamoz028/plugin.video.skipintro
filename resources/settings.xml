@@ -7,7 +7,7 @@
     <category label="32036">
         <setting id="countdown_seconds" type="slider" label="32037" description="32038" default="6" range="3,1,10"/>
         <setting id="notification_seconds" type="slider" label="32039" description="32040" default="3" range="3,1,10"/>
-        <setting id="notification_opacity" type="slider" label="32041" description="32042" default="80" range="30,5,100"/>
+        <setting id="notification_opacity" type="slider" label="32041" description="32042" default="80" range="0,5,100"/>
         <setting id="notification_top_pct" type="slider" label="32043" description="32044" default="10" range="0,5,90"/>
     </category>
     <category label="32031">
